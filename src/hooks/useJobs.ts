@@ -9,6 +9,7 @@ export const useJobs = () => {
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiStatus, setApiStatus] = useState<number | null>(null);
 
   useEffect(() => {
     loadSavedJobs();
@@ -29,6 +30,7 @@ export const useJobs = () => {
   const loadJobs = async () => {
     setLoading(true);
     const response = await fetchJobs();
+    setApiStatus(response.status);
     
     if (response.error) {
       setError(response.error);
@@ -93,6 +95,7 @@ export const useJobs = () => {
     savedJobs,
     loading,
     error,
+    apiStatus,
     saveJob,
     removeJob,
     refreshJobs: loadJobs,

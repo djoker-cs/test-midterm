@@ -5,6 +5,7 @@ import { Provider as PaperProvider, IconButton } from 'react-native-paper';
 import { JobFinderScreen } from './src/screens/JobFinderScreen';
 import { SavedJobsScreen } from './src/screens/SavedJobsScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,12 +51,14 @@ const Navigation = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <PaperProvider>
-        <NavigationContainer>
-          <Navigation />
-        </NavigationContainer>
-      </PaperProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <PaperProvider>
+          <NavigationContainer>
+            <Navigation />
+          </NavigationContainer>
+        </PaperProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

@@ -8,7 +8,7 @@ import { Job, ApplicationForm as ApplicationFormType } from '../types/types';
 import { useTheme } from '../context/ThemeContext';
 
 export const JobFinderScreen = () => {
-  const { jobs, loading, error, saveJob } = useJobs();
+  const { jobs, loading, error, apiStatus, saveJob } = useJobs();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const { isDarkMode } = useTheme();
@@ -41,7 +41,14 @@ export const JobFinderScreen = () => {
   if (error) {
     return (
       <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f0f0f0' }]}>
-        <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Error: {error}</Text>
+        <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+          Error: {error}
+        </Text>
+        {apiStatus && (
+          <Text style={{ color: isDarkMode ? '#ffffff' : '#000000', marginTop: 8 }}>
+            API Status: {apiStatus}
+          </Text>
+        )}
       </View>
     );
   }
@@ -59,6 +66,19 @@ export const JobFinderScreen = () => {
         theme={{ colors: { primary: isDarkMode ? '#ffffff' : '#000000' } }}
       />
       
+      {jobs.length === 0 && !error && (
+        <View style={styles.centered}>
+          <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+            No jobs found
+          </Text>
+          {apiStatus && (
+            <Text style={{ color: isDarkMode ? '#ffffff' : '#000000', marginTop: 8 }}>
+              API Status: {apiStatus}
+            </Text>
+          )}
+        </View>
+      )}
+
       <FlatList
         data={filteredJobs}
         keyExtractor={(item) => item.id}
