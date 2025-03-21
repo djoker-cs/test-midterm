@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
 import { Job } from '../types';
+import { fetchJobs } from '../utils/api';
 
 export const useJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -11,7 +12,7 @@ export const useJobs = () => {
 
   useEffect(() => {
     loadSavedJobs();
-    fetchJobs();
+    loadJobs();
   }, []);
 
   const loadSavedJobs = async () => {
@@ -25,23 +26,31 @@ export const useJobs = () => {
     }
   };
 
-  const fetchJobs = async () => {
-    try {
-      const response = await fetch('https://empllo.com/api/v1');
-      const data = await response.json();
-      
-      // Add unique IDs to jobs
-      const jobsWithIds = data.map((job: Omit<Job, 'id'>) => ({
+  const loadJobs = async () => {
+    setLoading(true);
+    const response = await fetchJobs();
+    
+    if (response.error) {
+      setError(response.error);
+      setLoading(false);
+      return;
+    }
+
+    if (response.data) {
+      // Add unique IDs to jobs and check if they're saved
+      const jobsWithIds = response.data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuid.v4().toString(),
+        isSaved: savedJobs.some(savedJob => 
+          savedJob.title === job.title && 
+          savedJob.company === job.company
+        )
       }));
       
       setJobs(jobsWithIds);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch jobs');
-      setLoading(false);
     }
+    
+    setLoading(false);
   };
 
   const saveJob = async (job: Job) => {
@@ -77,5 +86,6 @@ export const useJobs = () => {
     error,
     saveJob,
     removeJob,
+    refreshJobs: loadJobs, // Added refresh functionality
   };
 }; 
