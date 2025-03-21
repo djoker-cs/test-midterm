@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
-import { Job } from '../types';
+import { Job } from '../types/types';
 import { fetchJobs } from '../utils/api';
 
 export const useJobs = () => {
@@ -54,6 +54,15 @@ export const useJobs = () => {
   };
 
   const saveJob = async (job: Job) => {
+    // Check if job is already saved
+    const isAlreadySaved = savedJobs.some(
+      savedJob => savedJob.title === job.title && savedJob.company === job.company
+    );
+
+    if (isAlreadySaved) {
+      return;
+    }
+
     try {
       const updatedSavedJobs = [...savedJobs, { ...job, isSaved: true }];
       await AsyncStorage.setItem('savedJobs', JSON.stringify(updatedSavedJobs));
@@ -86,6 +95,6 @@ export const useJobs = () => {
     error,
     saveJob,
     removeJob,
-    refreshJobs: loadJobs, // Added refresh functionality
+    refreshJobs: loadJobs,
   };
 }; 

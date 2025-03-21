@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Card, Title, Paragraph, Button } from 'react-native-paper';
-import { Job } from '../types';
+import { Job } from '../types/types';
 import { useTheme } from '../context/ThemeContext';
 
 interface JobCardProps {
@@ -33,7 +33,7 @@ export const JobCard: React.FC<JobCardProps> = ({
           {job.title}
         </Title>
         <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
-          {job.company}
+          Company: {job.company}
         </Paragraph>
         <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
           Salary: {job.salary}
@@ -41,14 +41,25 @@ export const JobCard: React.FC<JobCardProps> = ({
         <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
           Location: {job.location}
         </Paragraph>
+        <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
+          {job.description}
+        </Paragraph>
       </Card.Content>
       <Card.Actions>
         {onSave && !job.isSaved && (
-          <Button onPress={() => onSave(job)}>Save</Button>
+          <Button mode="outlined" onPress={() => onSave(job)}>
+            Save
+          </Button>
         )}
-        {job.isSaved && <Button disabled>Saved</Button>}
+        {job.isSaved && (
+          <Button mode="outlined" disabled>
+            Saved
+          </Button>
+        )}
         {showRemoveButton && onRemove && (
-          <Button onPress={() => onRemove(job.id)}>Remove</Button>
+          <Button mode="outlined" onPress={() => onRemove(job.id)}>
+            Remove
+          </Button>
         )}
         <Button mode="contained" onPress={() => onApply(job)}>
           Apply

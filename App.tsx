@@ -5,13 +5,11 @@ import { Provider as PaperProvider, IconButton } from 'react-native-paper';
 import { JobFinderScreen } from './src/screens/JobFinderScreen';
 import { SavedJobsScreen } from './src/screens/SavedJobsScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { useNavigation } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
 
 const Navigation = () => {
   const { isDarkMode, toggleTheme } = useTheme();
-  const navigation = useNavigation();
 
   return (
     <Stack.Navigator
@@ -31,15 +29,15 @@ const Navigation = () => {
       <Stack.Screen
         name="JobFinder"
         component={JobFinderScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Job Finder',
           headerLeft: () => (
             <IconButton
               icon="bookmark-outline"
-              onPress={() => navigation.navigate('SavedJobs' as never)}
+              onPress={() => navigation.navigate('SavedJobs')}
             />
           ),
-        }}
+        })}
       />
       <Stack.Screen
         name="SavedJobs"
