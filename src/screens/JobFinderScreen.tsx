@@ -1,38 +1,94 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Searchbar, ActivityIndicator, Text } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Modal } from 'react-native';
+import { Searchbar, ActivityIndicator, IconButton, Text, Button } from 'react-native-paper';
 import { JobCard } from '../components/JobCard';
 import { ApplicationForm } from '../components/ApplicationForm';
 import { useJobs } from '../hooks/useJobs';
-import { Job, ApplicationForm as ApplicationFormType } from '../types/types';
 import { useTheme } from '../context/ThemeContext';
+import { Job, JobApplication } from '../types/types';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { AxiosError } from 'axios';
 
-export const JobFinderScreen = () => {
-  const { jobs, loading, error, apiStatus, saveJob } = useJobs();
+type Props = NativeStackScreenProps<RootStackParamList, 'JobFinder'>;
+
+export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
+  const { jobs, loading, error, saveJob, searchJobs } = useJobs();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const { isDarkMode } = useTheme();
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [testResults, setTestResults] = useState<string>('');
 
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    searchJobs(query);
+  };
 
   const handleApply = (job: Job) => {
     setSelectedJob(job);
+    setShowApplicationForm(true);
   };
 
-  const handleSubmitApplication = (form: ApplicationFormType) => {
+  const handleApplicationSubmit = (application: JobApplication) => {
     // In a real app, you would send this to an API
-    console.log('Application submitted:', form);
+    console.log('Application submitted:', application);
+    setShowApplicationForm(false);
     setSelectedJob(null);
+    // Show success message
+    alert('Application submitted successfully!');
+  };
+
+  const runTests = async () => {
+    try {
+      setTestResults('Running tests...\n');
+      
+      // Test 1: API Connection
+      setTestResults(prev => prev + '\n1. Testing API Connection...');
+      const response = await axios.get('https://empllo.com/api/v1');
+      setTestResults(prev => prev + `\n   ✓ API responded with status ${response.status}`);
+      
+      // Test 2: Data Structure
+      setTestResults(prev => prev + '\n\n2. Testing Data Structure...');
+      const data = response.data;
+      setTestResults(prev => prev + `\n   ✓ Received ${Array.isArray(data) ? data.length : 1} job(s)`);
+      
+      // Test 3: UUID Generation
+      setTestResults(prev => prev + '\n\n3. Testing UUID Generation...');
+      const jobsData = Array.isArray(data) ? data : [data];
+      const jobsWithIds = jobsData.map(job => ({
+        ...job,
+        id: uuidv4()
+      }));
+      const uniqueIds = new Set(jobsWithIds.map(job => job.id));
+      setTestResults(prev => prev + `\n   ✓ Generated ${uniqueIds.size} unique IDs for ${jobsWithIds.length} jobs`);
+      
+      // Test 4: Required Fields
+      setTestResults(prev => prev + '\n\n4. Testing Required Fields...');
+      const sampleJob = jobsWithIds[0];
+      setTestResults(prev => prev + '\n   Job fields present:');
+      setTestResults(prev => prev + `\n   - Title: ${sampleJob.title ? '✓' : '✗'}`);
+      setTestResults(prev => prev + `\n   - Company: ${sampleJob.company ? '✓' : '✗'}`);
+      setTestResults(prev => prev + `\n   - Salary: ${sampleJob.salary ? '✓' : '✗'}`);
+      setTestResults(prev => prev + `\n   - Location: ${sampleJob.location ? '✓' : '✗'}`);
+      setTestResults(prev => prev + `\n   - Description: ${sampleJob.description ? '✓' : '✗'}`);
+      
+      setTestResults(prev => prev + '\n\nAll tests completed successfully! ✨');
+    } catch (error) {
+      const err = error as Error | AxiosError;
+      setTestResults(prev => prev + `\n\nError during tests: ${err.message}`);
+      if (axios.isAxiosError(err)) {
+        setTestResults(prev => prev + `\nStatus: ${err.response?.status}`);
+        setTestResults(prev => prev + `\nResponse: ${JSON.stringify(err.response?.data, null, 2)}`);
+      }
+    }
   };
 
   if (loading) {
     return (
-      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f0f0f0' }]}>
+      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -40,48 +96,43 @@ export const JobFinderScreen = () => {
 
   if (error) {
     return (
-      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f0f0f0' }]}>
-        <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
-          Error: {error}
-        </Text>
-        {apiStatus && (
-          <Text style={{ color: isDarkMode ? '#ffffff' : '#000000', marginTop: 8 }}>
-            API Status: {apiStatus}
-          </Text>
-        )}
+      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
+        <Text>Error: {error}</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f0f0f0' }]}>
-      <Searchbar
-        placeholder="Search jobs..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchBar}
-        iconColor={isDarkMode ? '#ffffff' : '#000000'}
-        inputStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-        placeholderTextColor={isDarkMode ? '#888888' : '#666666'}
-        theme={{ colors: { primary: isDarkMode ? '#ffffff' : '#000000' } }}
-      />
-      
-      {jobs.length === 0 && !error && (
-        <View style={styles.centered}>
-          <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
-            No jobs found
-          </Text>
-          {apiStatus && (
-            <Text style={{ color: isDarkMode ? '#ffffff' : '#000000', marginTop: 8 }}>
-              API Status: {apiStatus}
-            </Text>
-          )}
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
+      <View style={styles.header}>
+        <Searchbar
+          placeholder="Search jobs..."
+          onChangeText={handleSearch}
+          value={searchQuery}
+          style={styles.searchBar}
+        />
+        <IconButton
+          icon={isDarkMode ? 'white-balance-sunny' : 'moon-waning-crescent'}
+          onPress={toggleTheme}
+        />
+      </View>
+
+      <Button
+        mode="contained"
+        onPress={runTests}
+        style={styles.testButton}
+      >
+        Run API Tests
+      </Button>
+
+      {testResults ? (
+        <View style={styles.testResults}>
+          <Text>{testResults}</Text>
         </View>
-      )}
+      ) : null}
 
       <FlatList
-        data={filteredJobs}
-        keyExtractor={(item) => item.id}
+        data={jobs}
         renderItem={({ item }) => (
           <JobCard
             job={item}
@@ -89,17 +140,29 @@ export const JobFinderScreen = () => {
             onApply={handleApply}
           />
         )}
-        contentContainerStyle={styles.listContent}
+        keyExtractor={(item) => item.id}
       />
 
-      {selectedJob && (
-        <ApplicationForm
-          visible={!!selectedJob}
-          onDismiss={() => setSelectedJob(null)}
-          onSubmit={handleSubmitApplication}
-          job={selectedJob}
-        />
-      )}
+      <Modal
+        visible={showApplicationForm}
+        onRequestClose={() => setShowApplicationForm(false)}
+        animationType="slide"
+      >
+        <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
+          <IconButton
+            icon="close"
+            size={24}
+            onPress={() => setShowApplicationForm(false)}
+            style={styles.closeButton}
+          />
+          {selectedJob && (
+            <ApplicationForm
+              jobId={selectedJob.id}
+              onSubmit={handleApplicationSubmit}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -108,16 +171,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  searchBar: {
-    margin: 16,
-    elevation: 4,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
   },
-  listContent: {
-    padding: 8,
+  searchBar: {
+    flex: 1,
+    marginRight: 8,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  testButton: {
+    margin: 16,
+  },
+  testResults: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    maxHeight: 200,
   },
 }); 

@@ -8,7 +8,7 @@ export interface Job {
   isSaved?: boolean;
 }
 
-export interface ApplicationForm {
+export interface JobApplication {
   name: string;
   email: string;
   contactNumber: string;

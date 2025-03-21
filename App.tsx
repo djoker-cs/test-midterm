@@ -2,63 +2,42 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider, IconButton } from 'react-native-paper';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { JobFinderScreen } from './src/screens/JobFinderScreen';
 import { SavedJobsScreen } from './src/screens/SavedJobsScreen';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { RootStackParamList } from './src/types/navigation';
 
-const Stack = createNativeStackNavigator();
-
-const Navigation = () => {
-  const { isDarkMode, toggleTheme } = useTheme();
-
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
-        },
-        headerTintColor: isDarkMode ? '#ffffff' : '#000000',
-        headerRight: () => (
-          <IconButton
-            icon={isDarkMode ? 'white-balance-sunny' : 'moon-waning-crescent'}
-            onPress={toggleTheme}
-          />
-        ),
-      }}
-    >
-      <Stack.Screen
-        name="JobFinder"
-        component={JobFinderScreen}
-        options={({ navigation }) => ({
-          title: 'Job Finder',
-          headerLeft: () => (
-            <IconButton
-              icon="bookmark-outline"
-              onPress={() => navigation.navigate('SavedJobs')}
-            />
-          ),
-        })}
-      />
-      <Stack.Screen
-        name="SavedJobs"
-        component={SavedJobsScreen}
-        options={{ title: 'Saved Jobs' }}
-      />
-    </Stack.Navigator>
-  );
-};
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <PaperProvider>
-          <NavigationContainer>
-            <Navigation />
-          </NavigationContainer>
-        </PaperProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <PaperProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="JobFinder">
+            <Stack.Screen
+              name="JobFinder"
+              component={JobFinderScreen}
+              options={({ navigation }) => ({
+                title: 'Job Finder',
+                headerRight: () => (
+                  <PaperProvider>
+                    <IconButton
+                      icon="bookmark"
+                      onPress={() => navigation.navigate('SavedJobs')}
+                    />
+                  </PaperProvider>
+                ),
+              })}
+            />
+            <Stack.Screen
+              name="SavedJobs"
+              component={SavedJobsScreen}
+              options={{ title: 'Saved Jobs' }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PaperProvider>
+    </ThemeProvider>
   );
 }
