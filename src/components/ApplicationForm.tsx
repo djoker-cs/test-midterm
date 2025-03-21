@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { useTheme } from '../context/ThemeContext';
 import { JobApplication } from '../types/types';
 
@@ -38,8 +38,14 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
 
     if (!formData.contactNumber.trim()) {
       newErrors.contactNumber = 'Contact number is required';
-    } else if (!/^\d{10}$/.test(formData.contactNumber.replace(/\D/g, ''))) {
-      newErrors.contactNumber = 'Invalid contact number format';
+    } else {
+      // Philippine mobile number validation
+      // Format: +63 XXX XXX XXXX or 09XX XXX XXXX
+      const phoneRegex = /^(\+63|0)([9]\d{9})$/;
+      const cleanNumber = formData.contactNumber.replace(/\s+/g, '');
+      if (!phoneRegex.test(cleanNumber)) {
+        newErrors.contactNumber = 'Invalid Philippine mobile number format (e.g., +63 912 345 6789 or 0912 345 6789)';
+      }
     }
 
     if (!formData.whyHireYou.trim()) {
@@ -48,6 +54,24 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const formatPhoneNumber = (number: string) => {
+    // Remove all non-digit characters
+    const cleaned = number.replace(/\D/g, '');
+    
+    // Format the number
+    if (cleaned.startsWith('63')) {
+      return `+${cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1 $2 $3 $4')}`;
+    } else if (cleaned.startsWith('0')) {
+      return cleaned.replace(/(\d{4})(\d{3})(\d{4})/, '$1 $2 $3');
+    }
+    return number;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const formattedNumber = formatPhoneNumber(text);
+    setFormData({ ...formData, contactNumber: formattedNumber });
   };
 
   const handleSubmit = () => {
@@ -79,7 +103,9 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
         style={styles.input}
       />
       {errors.name && (
-        <Text style={styles.errorText}>{errors.name}</Text>
+        <HelperText type="error" visible={!!errors.name}>
+          {errors.name}
+        </HelperText>
       )}
 
       <TextInput
@@ -92,20 +118,25 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
         keyboardType="email-address"
       />
       {errors.email && (
-        <Text style={styles.errorText}>{errors.email}</Text>
+        <HelperText type="error" visible={!!errors.email}>
+          {errors.email}
+        </HelperText>
       )}
 
       <TextInput
         label="Contact Number"
         value={formData.contactNumber}
-        onChangeText={(text) => setFormData({ ...formData, contactNumber: text })}
+        onChangeText={handlePhoneChange}
         mode="outlined"
         error={!!errors.contactNumber}
         style={styles.input}
         keyboardType="phone-pad"
+        placeholder="+63 XXX XXX XXXX or 09XX XXX XXXX"
       />
       {errors.contactNumber && (
-        <Text style={styles.errorText}>{errors.contactNumber}</Text>
+        <HelperText type="error" visible={!!errors.contactNumber}>
+          {errors.contactNumber}
+        </HelperText>
       )}
 
       <TextInput
@@ -119,7 +150,9 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
         numberOfLines={4}
       />
       {errors.whyHireYou && (
-        <Text style={styles.errorText}>{errors.whyHireYou}</Text>
+        <HelperText type="error" visible={!!errors.whyHireYou}>
+          {errors.whyHireYou}
+        </HelperText>
       )}
 
       <Button
@@ -143,10 +176,5 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 16,
-  },
-  errorText: {
-    color: '#ff0000',
-    fontSize: 12,
-    marginBottom: 8,
-  },
+  }
 }); 
