@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal } from 'react-native';
+import { View, StyleSheet, FlatList, Modal, ScrollView } from 'react-native';
 import { Searchbar, ActivityIndicator, IconButton, Text, Button } from 'react-native-paper';
 import { JobCard } from '../components/JobCard';
 import { ApplicationForm } from '../components/ApplicationForm';
@@ -21,6 +21,7 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [testResults, setTestResults] = useState<string>('');
+  const [showTestResults, setShowTestResults] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -44,6 +45,7 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
   const runTests = async () => {
     try {
       setTestResults('Running tests...\n');
+      setShowTestResults(true);
       
       // Test 1: Mock API Connection
       setTestResults(prev => prev + '\n1. Testing Mock API Connection...');
@@ -118,12 +120,6 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
         Run API Tests
       </Button>
 
-      {testResults ? (
-        <View style={styles.testResults}>
-          <Text>{testResults}</Text>
-        </View>
-      ) : null}
-
       <FlatList
         data={jobs}
         renderItem={({ item }) => (
@@ -154,6 +150,33 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
               onSubmit={handleApplicationSubmit}
             />
           )}
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showTestResults}
+        onRequestClose={() => setShowTestResults(false)}
+        animationType="slide"
+        transparent
+      >
+        <View style={styles.testModalOverlay}>
+          <View style={[styles.testModalContent, { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }]}>
+            <View style={styles.testModalHeader}>
+              <Text style={[styles.testModalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+                Test Results
+              </Text>
+              <IconButton
+                icon="close"
+                size={24}
+                onPress={() => setShowTestResults(false)}
+              />
+            </View>
+            <ScrollView style={styles.testResultsScroll}>
+              <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                {testResults}
+              </Text>
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -188,11 +211,31 @@ const styles = StyleSheet.create({
   testButton: {
     margin: 16,
   },
-  testResults: {
-    margin: 16,
+  testModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     padding: 16,
-    backgroundColor: '#f0f0f0',
+  },
+  testModalContent: {
     borderRadius: 8,
-    maxHeight: 200,
+    maxHeight: '80%',
+    width: '100%',
+    elevation: 5,
+  },
+  testModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#cccccc',
+  },
+  testModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  testResultsScroll: {
+    padding: 16,
   },
 }); 
