@@ -8,7 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Job, JobApplication } from '../types/types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import axios from 'axios';
+import { getMockJobs } from '../utils/mockApi';
 import { v4 as uuidv4 } from 'uuid';
 import { AxiosError } from 'axios';
 
@@ -45,19 +45,17 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setTestResults('Running tests...\n');
       
-      // Test 1: API Connection
-      setTestResults(prev => prev + '\n1. Testing API Connection...');
-      const response = await axios.get('https://empllo.com/api/v1');
-      setTestResults(prev => prev + `\n   ✓ API responded with status ${response.status}`);
+      // Test 1: Mock API Connection
+      setTestResults(prev => prev + '\n1. Testing Mock API Connection...');
+      const jobsData = await getMockJobs();
+      setTestResults(prev => prev + `\n   ✓ Mock API responded with ${jobsData.length} jobs`);
       
       // Test 2: Data Structure
       setTestResults(prev => prev + '\n\n2. Testing Data Structure...');
-      const data = response.data;
-      setTestResults(prev => prev + `\n   ✓ Received ${Array.isArray(data) ? data.length : 1} job(s)`);
+      setTestResults(prev => prev + `\n   ✓ Received ${jobsData.length} jobs`);
       
       // Test 3: UUID Generation
       setTestResults(prev => prev + '\n\n3. Testing UUID Generation...');
-      const jobsData = Array.isArray(data) ? data : [data];
       const jobsWithIds = jobsData.map(job => ({
         ...job,
         id: uuidv4()
@@ -77,12 +75,7 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
       
       setTestResults(prev => prev + '\n\nAll tests completed successfully! ✨');
     } catch (error) {
-      const err = error as Error | AxiosError;
-      setTestResults(prev => prev + `\n\nError during tests: ${err.message}`);
-      if (axios.isAxiosError(err)) {
-        setTestResults(prev => prev + `\nStatus: ${err.response?.status}`);
-        setTestResults(prev => prev + `\nResponse: ${JSON.stringify(err.response?.data, null, 2)}`);
-      }
+      setTestResults(prev => prev + `\n\nError during tests: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
