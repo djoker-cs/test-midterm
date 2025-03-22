@@ -9,7 +9,7 @@ interface UseJobsReturn {
   error: string | null;
   saveJob: (job: Job) => Promise<void>;
   removeJob: (jobId: string) => Promise<void>;
-  searchJobs: (query: string) => void;
+  searchJobs: (query: string) => Promise<void>;
   refreshJobs: () => Promise<void>;
 }
 
@@ -51,7 +51,9 @@ export const useJobs = (): UseJobsReturn => {
 
   const saveJob = async (job: Job) => {
     try {
-      setSavedJobs(prev => [...prev, job]);
+      if (!savedJobs.some(savedJob => savedJob.id === job.id)) {
+        setSavedJobs(prev => [...prev, job]);
+      }
     } catch (err) {
       console.error('Error saving job:', err);
     }

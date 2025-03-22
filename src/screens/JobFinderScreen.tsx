@@ -3,13 +3,11 @@ import { View, StyleSheet, FlatList, Modal, ScrollView } from 'react-native';
 import { Searchbar, ActivityIndicator, IconButton, Text, Button } from 'react-native-paper';
 import 'react-native-get-random-values';
 import { JobCard } from '../components/JobCard';
-import { ApplicationForm } from '../components/ApplicationForm';
 import { useJobs } from '../hooks/useJobs';
 import { useTheme } from '../context/ThemeContext';
-import { Job, JobApplication } from '../types/types';
+import { Job } from '../types/types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { v4 as uuidv4 } from 'uuid';
 import { jobService } from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'JobFinder'>;
@@ -48,16 +46,12 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
       
       // Test 3: UUID Generation
       setTestResults(prev => prev + '\n\n3. Testing UUID Generation...');
-      const jobsWithIds = jobsData.map(job => ({
-        ...job,
-        id: uuidv4()
-      }));
-      const uniqueIds = new Set(jobsWithIds.map(job => job.id));
-      setTestResults(prev => prev + `\n   ✓ Generated ${uniqueIds.size} unique IDs for ${jobsWithIds.length} jobs`);
+      const uniqueIds = new Set(jobsData.map(job => job.id));
+      setTestResults(prev => prev + `\n   ✓ Generated ${uniqueIds.size} unique IDs for ${jobsData.length} jobs`);
       
       // Test 4: Required Fields
       setTestResults(prev => prev + '\n\n4. Testing Required Fields...');
-      const sampleJob = jobsWithIds[0];
+      const sampleJob = jobsData[0];
       setTestResults(prev => prev + '\n   Job fields present:');
       setTestResults(prev => prev + `\n   - Title: ${sampleJob.title ? '✓' : '✗'}`);
       setTestResults(prev => prev + `\n   - Company: ${sampleJob.company ? '✓' : '✗'}`);
