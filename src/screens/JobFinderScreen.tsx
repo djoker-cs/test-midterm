@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal } from 'react-native';
-import { Searchbar, ActivityIndicator, IconButton, Text } from 'react-native-paper';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { Searchbar, ActivityIndicator, Text, IconButton, Modal, Portal } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { JobCard } from '../components/JobCard';
 import { ApplicationForm } from '../components/ApplicationForm';
 import { useJobs } from '../hooks/useJobs';
 import { useTheme } from '../context/ThemeContext';
-import { Job, JobApplication } from '../types/types';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { Job, JobApplication, RootStackParamList } from '../types/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'JobFinder'>;
-
-export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
+export const JobFinderScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { jobs, loading, error, saveJob, searchJobs } = useJobs();
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -25,35 +24,25 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleApply = (job: Job) => {
     setSelectedJob(job);
-    setShowApplicationForm(true);
+    setShowModal(true);
   };
 
   const handleApplicationSubmit = (application: JobApplication) => {
-    // In a real app, you would send this to an API
     console.log('Application submitted:', application);
-    setShowApplicationForm(false);
+    setShowModal(false);
     setSelectedJob(null);
-    alert('Application submitted successfully!');
   };
 
   if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+    return <ActivityIndicator style={styles.centered} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
-        <Text>Error: {error}</Text>
-      </View>
-    );
+    return <Text style={styles.error}>{error}</Text>;
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Searchbar
           placeholder="Search jobs..."
@@ -62,7 +51,7 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
           style={styles.searchBar}
         />
         <IconButton
-          icon={isDarkMode ? 'white-balance-sunny' : 'moon-waning-crescent'}
+          icon="theme-light-dark"
           onPress={toggleTheme}
         />
       </View>
@@ -76,29 +65,23 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
             onApply={handleApply}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
       />
 
-      <Modal
-        visible={showApplicationForm}
-        onRequestClose={() => setShowApplicationForm(false)}
-        animationType="slide"
-      >
-        <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
-          <IconButton
-            icon="close"
-            size={24}
-            onPress={() => setShowApplicationForm(false)}
-            style={styles.closeButton}
-          />
+      <Portal>
+        <Modal
+          visible={showModal}
+          onDismiss={() => setShowModal(false)}
+          contentContainerStyle={styles.modal}
+        >
           {selectedJob && (
             <ApplicationForm
               jobId={selectedJob.id}
               onSubmit={handleApplicationSubmit}
             />
           )}
-        </View>
-      </Modal>
+        </Modal>
+      </Portal>
     </View>
   );
 };
@@ -110,22 +93,25 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 8,
   },
   searchBar: {
     flex: 1,
-    marginRight: 8,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContainer: {
-    flex: 1,
-    padding: 16,
+  error: {
+    textAlign: 'center',
+    margin: 16,
+    color: 'red',
   },
-  closeButton: {
-    alignSelf: 'flex-end',
+  modal: {
+    backgroundColor: 'white',
+    padding: 16,
+    margin: 16,
+    borderRadius: 8,
   },
 }); 

@@ -11,12 +11,12 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <PaperProvider>
+    <PaperProvider>
+      <ThemeProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="JobFinder">
-            <Stack.Screen
-              name="JobFinder"
+          <Stack.Navigator>
+            <Stack.Screen 
+              name="JobFinder" 
               component={JobFinderScreen}
               options={({ navigation }) => ({
                 title: 'Job Finder',
@@ -28,14 +28,14 @@ export default function App() {
                 ),
               })}
             />
-            <Stack.Screen
-              name="SavedJobs"
+            <Stack.Screen 
+              name="SavedJobs" 
               component={SavedJobsScreen}
               options={{ title: 'Saved Jobs' }}
             />
           </Stack.Navigator>
         </NavigationContainer>
-      </PaperProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </PaperProvider>
   );
 }

@@ -1,3 +1,4 @@
+// Job related types
 export interface Job {
   id: string;
   title: string;
@@ -16,12 +17,21 @@ export interface JobApplication {
   jobId: string;
 }
 
+// Navigation types
+export type RootStackParamList = {
+  JobFinder: undefined;
+  SavedJobs: undefined;
+};
+
+// Theme types
 export interface ThemeContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
 }
 
-export type ValidationError = {
-  field: string;
-  message: string;
-}; 
+export interface ValidationError {
+  name?: string;
+  email?: string;
+  phone?: string;
+  coverLetter?: string;
+} 

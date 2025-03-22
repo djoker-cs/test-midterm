@@ -39,40 +39,27 @@ export const useJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      console.log('Starting API fetch...');
-      const response = await fetch('https://empllo.com/api/v1', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-
+      const response = await fetch('https://empllo.com/api/v1');
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Network response was not ok');
       }
-
       const data = await response.json();
-      console.log('API Response:', data); // For debugging
-
       const jobsWithIds = data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
         isSaved: false
       }));
-
       setJobs(jobsWithIds);
-      setLoading(false);
     } catch (err) {
-      console.error('API Error:', err); // For debugging
-      setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
+      setError('Failed to fetch jobs');
+    } finally {
       setLoading(false);
     }
   };
 
   const loadSavedJobs = async () => {
     try {
-      const saved = await AsyncStorage.getItem('savedJobs');
+      const saved = await AsyncStorage.getItem('@savedJobs');
       if (saved) {
         setSavedJobs(JSON.parse(saved));
       }
@@ -84,7 +71,7 @@ export const useJobs = () => {
   const saveJob = async (job: Job) => {
     try {
       const updatedSavedJobs = [...savedJobs, { ...job, isSaved: true }];
-      await AsyncStorage.setItem('savedJobs', JSON.stringify(updatedSavedJobs));
+      await AsyncStorage.setItem('@savedJobs', JSON.stringify(updatedSavedJobs));
       setSavedJobs(updatedSavedJobs);
       
       const updatedJobs = jobs.map(j => 
@@ -99,7 +86,7 @@ export const useJobs = () => {
   const removeJob = async (jobId: string) => {
     try {
       const updatedSavedJobs = savedJobs.filter(job => job.id !== jobId);
-      await AsyncStorage.setItem('savedJobs', JSON.stringify(updatedSavedJobs));
+      await AsyncStorage.setItem('@savedJobs', JSON.stringify(updatedSavedJobs));
       setSavedJobs(updatedSavedJobs);
       
       const updatedJobs = jobs.map(j => 

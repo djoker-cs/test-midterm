@@ -1,78 +1,68 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { Text, Modal, Portal } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { JobCard } from '../components/JobCard';
 import { ApplicationForm } from '../components/ApplicationForm';
 import { useJobs } from '../hooks/useJobs';
-import { useTheme } from '../context/ThemeContext';
-import { Job, JobApplication } from '../types/types';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { Job, JobApplication, RootStackParamList } from '../types/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'SavedJobs'>;
-
-export const SavedJobsScreen: React.FC<Props> = ({ navigation }) => {
+export const SavedJobsScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { savedJobs, removeJob } = useJobs();
-  const { isDarkMode } = useTheme();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleApply = (job: Job) => {
     setSelectedJob(job);
-    setShowApplicationForm(true);
+    setShowModal(true);
   };
 
   const handleApplicationSubmit = (application: JobApplication) => {
-    // In a real app, you would send this to an API
     console.log('Application submitted:', application);
-    setShowApplicationForm(false);
+    setShowModal(false);
     setSelectedJob(null);
-    alert('Application submitted successfully!');
     navigation.navigate('JobFinder');
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
-      {savedJobs.length === 0 ? (
-        <View style={styles.centered}>
-          <Text>No saved jobs yet</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={savedJobs}
-          renderItem={({ item }) => (
-            <JobCard
-              job={item}
-              onSave={() => {}}
-              onApply={handleApply}
-              onRemove={removeJob}
-              showRemoveButton
-            />
-          )}
-          keyExtractor={(item) => item.id}
-        />
-      )}
+  if (savedJobs.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <Text>No saved jobs yet</Text>
+      </View>
+    );
+  }
 
-      <Modal
-        visible={showApplicationForm}
-        onRequestClose={() => setShowApplicationForm(false)}
-        animationType="slide"
-      >
-        <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
-          <IconButton
-            icon="close"
-            size={24}
-            onPress={() => setShowApplicationForm(false)}
-            style={styles.closeButton}
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={savedJobs}
+        renderItem={({ item }) => (
+          <JobCard
+            job={item}
+            onApply={handleApply}
+            onRemove={removeJob}
+            showRemoveButton
           />
+        )}
+        keyExtractor={item => item.id}
+      />
+
+      <Portal>
+        <Modal
+          visible={showModal}
+          onDismiss={() => setShowModal(false)}
+          contentContainerStyle={styles.modal}
+        >
           {selectedJob && (
             <ApplicationForm
               jobId={selectedJob.id}
               onSubmit={handleApplicationSubmit}
             />
           )}
-        </View>
-      </Modal>
+        </Modal>
+      </Portal>
     </View>
   );
 };
@@ -86,11 +76,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContainer: {
-    flex: 1,
+  modal: {
+    backgroundColor: 'white',
     padding: 16,
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
+    margin: 16,
+    borderRadius: 8,
   },
 }); 
