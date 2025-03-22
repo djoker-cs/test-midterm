@@ -5,18 +5,20 @@ export interface Job {
   salary: string;
   location: string;
   description: string;
+  isSaved?: boolean;
 }
 
 export interface JobApplication {
+  jobId: string;
   name: string;
   email: string;
-  contactNumber: string;
-  whyHireYou: string;
-  jobId: string;
+  phone: string;
+  coverLetter: string;
 }
 
-export interface RootStackParamList {
-  JobFinder: undefined;
-  SavedJobs: undefined;
-  ApplicationForm: { job: Job; fromSavedJobs?: boolean };
+export interface ValidationError {
+  name?: string;
+  email?: string;
+  phone?: string;
+  coverLetter?: string;
 } 

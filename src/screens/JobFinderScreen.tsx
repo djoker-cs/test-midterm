@@ -3,17 +3,19 @@ import { View, StyleSheet, FlatList, Modal, ScrollView } from 'react-native';
 import { Searchbar, ActivityIndicator, IconButton, Text, Button } from 'react-native-paper';
 import 'react-native-get-random-values';
 import { JobCard } from '../components/JobCard';
+import { ApplicationForm } from '../components/ApplicationForm';
 import { useJobs } from '../hooks/useJobs';
 import { useTheme } from '../context/ThemeContext';
-import { Job } from '../types/types';
+import { Job, JobApplication } from '../types/types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { v4 as uuidv4 } from 'uuid';
 import { jobService } from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'JobFinder'>;
 
 export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
-  const { jobs, savedJobs, loading, error, saveJob, removeJob, searchJobs, refreshJobs } = useJobs();
+  const { jobs, loading, error, saveJob, searchJobs, refreshJobs } = useJobs();
   const { isDarkMode, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -27,7 +29,19 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleApply = (job: Job) => {
-    navigation.navigate('ApplicationForm', { job });
+    setSelectedJob(job);
+    setShowApplicationForm(true);
+  };
+
+  const handleApplicationSubmit = async (application: JobApplication) => {
+    try {
+      await jobService.applyForJob(selectedJob!.id, application);
+      setShowApplicationForm(false);
+      setSelectedJob(null);
+      alert('Application submitted successfully!');
+    } catch (error) {
+      alert('Failed to submit application. Please try again.');
+    }
   };
 
   const runTests = async () => {
@@ -46,12 +60,16 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
       
       // Test 3: UUID Generation
       setTestResults(prev => prev + '\n\n3. Testing UUID Generation...');
-      const uniqueIds = new Set(jobsData.map(job => job.id));
-      setTestResults(prev => prev + `\n   ✓ Generated ${uniqueIds.size} unique IDs for ${jobsData.length} jobs`);
+      const jobsWithIds = jobsData.map(job => ({
+        ...job,
+        id: uuidv4()
+      }));
+      const uniqueIds = new Set(jobsWithIds.map(job => job.id));
+      setTestResults(prev => prev + `\n   ✓ Generated ${uniqueIds.size} unique IDs for ${jobsWithIds.length} jobs`);
       
       // Test 4: Required Fields
       setTestResults(prev => prev + '\n\n4. Testing Required Fields...');
-      const sampleJob = jobsData[0];
+      const sampleJob = jobsWithIds[0];
       setTestResults(prev => prev + '\n   Job fields present:');
       setTestResults(prev => prev + `\n   - Title: ${sampleJob.title ? '✓' : '✗'}`);
       setTestResults(prev => prev + `\n   - Company: ${sampleJob.company ? '✓' : '✗'}`);
@@ -67,7 +85,7 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -75,17 +93,14 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
 
   if (error) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
         <Text>Error: {error}</Text>
-        <Button onPress={refreshJobs} style={styles.button}>
-          Retry
-        </Button>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
       <View style={styles.header}>
         <Searchbar
           placeholder="Search jobs..."
@@ -95,49 +110,9 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
         />
         <IconButton
           icon={isDarkMode ? 'white-balance-sunny' : 'moon-waning-crescent'}
-          size={24}
           onPress={toggleTheme}
         />
-        <IconButton
-          icon="bookmark"
-          size={24}
-          onPress={() => navigation.navigate('SavedJobs')}
-        />
       </View>
-
-      <FlatList
-        data={jobs}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <JobCard
-            job={item}
-            onSave={() => saveJob(item)}
-            onApply={handleApply}
-            isSaved={savedJobs.some(savedJob => savedJob.id === item.id)}
-          />
-        )}
-        contentContainerStyle={styles.list}
-      />
-
-      <Modal
-        visible={showTestResults}
-        onRequestClose={() => setShowTestResults(false)}
-        animationType="slide"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>API Test Results</Text>
-            <IconButton
-              icon="close"
-              size={24}
-              onPress={() => setShowTestResults(false)}
-            />
-          </View>
-          <ScrollView style={styles.testResults}>
-            <Text>{testResults}</Text>
-          </ScrollView>
-        </View>
-      </Modal>
 
       <Button
         mode="contained"
@@ -146,6 +121,66 @@ export const JobFinderScreen: React.FC<Props> = ({ navigation }) => {
       >
         Run API Tests
       </Button>
+
+      <FlatList
+        data={jobs}
+        renderItem={({ item }) => (
+          <JobCard
+            job={item}
+            onSave={saveJob}
+            onApply={handleApply}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+      />
+
+      <Modal
+        visible={showApplicationForm}
+        onRequestClose={() => setShowApplicationForm(false)}
+        animationType="slide"
+      >
+        <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}>
+          <IconButton
+            icon="close"
+            size={24}
+            onPress={() => setShowApplicationForm(false)}
+            style={styles.closeButton}
+          />
+          {selectedJob && (
+            <ApplicationForm
+              jobId={selectedJob.id}
+              onSubmit={handleApplicationSubmit}
+            />
+          )}
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showTestResults}
+        onRequestClose={() => setShowTestResults(false)}
+        animationType="slide"
+        transparent
+      >
+        <View style={styles.testModalOverlay}>
+          <View style={[styles.testModalContent, { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }]}>
+            <View style={styles.testModalHeader}>
+              <Text style={[styles.testModalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+                Test Results
+              </Text>
+              <IconButton
+                icon="close"
+                size={24}
+                onPress={() => setShowTestResults(false)}
+              />
+            </View>
+            <ScrollView style={styles.testResultsScroll}>
+              <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                {testResults}
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -157,48 +192,52 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#fff',
-    elevation: 4,
+    padding: 16,
   },
   searchBar: {
     flex: 1,
     marginRight: 8,
-  },
-  list: {
-    padding: 8,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  button: {
-    marginTop: 16,
-  },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   closeButton: {
     alignSelf: 'flex-end',
   },
-  testResults: {
-    padding: 16,
-  },
   testButton: {
     margin: 16,
+  },
+  testModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  testModalContent: {
+    borderRadius: 8,
+    maxHeight: '80%',
+    width: '100%',
+    elevation: 5,
+  },
+  testModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#cccccc',
+  },
+  testModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  testResultsScroll: {
+    padding: 16,
   },
 }); 

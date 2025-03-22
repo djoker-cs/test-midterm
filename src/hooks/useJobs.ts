@@ -2,22 +2,15 @@ import { useState, useEffect } from 'react';
 import { Job } from '../types/types';
 import { jobService } from '../services/api';
 
-interface UseJobsReturn {
-  jobs: Job[];
-  savedJobs: Job[];
-  loading: boolean;
-  error: string | null;
-  saveJob: (job: Job) => void;
-  removeJob: (jobId: string) => void;
-  searchJobs: (query: string) => Promise<void>;
-  refreshJobs: () => Promise<void>;
-}
-
-export const useJobs = (): UseJobsReturn => {
+export const useJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
   const fetchJobs = async () => {
     try {
@@ -31,10 +24,6 @@ export const useJobs = (): UseJobsReturn => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchJobs();
-  }, []);
 
   const searchJobs = async (query: string) => {
     try {
@@ -51,12 +40,18 @@ export const useJobs = (): UseJobsReturn => {
 
   const saveJob = (job: Job) => {
     if (!savedJobs.some(savedJob => savedJob.id === job.id)) {
-      setSavedJobs(prev => [...prev, job]);
+      setSavedJobs(prev => [...prev, { ...job, isSaved: true }]);
+      setJobs(prev => 
+        prev.map(j => j.id === job.id ? { ...j, isSaved: true } : j)
+      );
     }
   };
 
   const removeJob = (jobId: string) => {
     setSavedJobs(prev => prev.filter(job => job.id !== jobId));
+    setJobs(prev => 
+      prev.map(j => j.id === jobId ? { ...j, isSaved: false } : j)
+    );
   };
 
   return {

@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
-import { Job, JobApplication } from '../types/types';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-import { jobService } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
+import { JobApplication } from '../types/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ApplicationForm'>;
+interface ApplicationFormProps {
+  jobId: string;
+  onSubmit: (application: JobApplication) => void;
+}
 
-export const ApplicationForm: React.FC<Props> = ({ route, navigation }) => {
-  const { job, fromSavedJobs } = route.params;
-  const [formData, setFormData] = useState({
+export const ApplicationForm: React.FC<ApplicationFormProps> = ({
+  jobId,
+  onSubmit,
+}) => {
+  const { isDarkMode } = useTheme();
+  const [formData, setFormData] = useState<JobApplication>({
     name: '',
     email: '',
     contactNumber: '',
     whyHireYou: '',
+    jobId: jobId,
   });
-  const [errors, setErrors] = useState({
-    name: '',
-    email: '',
-    contactNumber: '',
-    whyHireYou: '',
-  });
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone: string) => {
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    return phoneRegex.test(phone);
-  };
+  const [errors, setErrors] = useState<Partial<Record<keyof JobApplication, string>>>({});
 
   const validateForm = () => {
-    const newErrors = {
-      name: '',
-      email: '',
-      contactNumber: '',
-      whyHireYou: '',
-    };
+    const newErrors: Partial<Record<keyof JobApplication, string>> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
@@ -47,113 +32,136 @@ export const ApplicationForm: React.FC<Props> = ({ route, navigation }) => {
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
     }
 
     if (!formData.contactNumber.trim()) {
       newErrors.contactNumber = 'Contact number is required';
-    } else if (!validatePhone(formData.contactNumber)) {
-      newErrors.contactNumber = 'Please enter a valid phone number';
+    } else {
+      // Philippine mobile number validation
+      // Format: +63 XXX XXX XXXX or 09XX XXX XXXX
+      const phoneRegex = /^(\+63|0)([9]\d{9})$/;
+      const cleanNumber = formData.contactNumber.replace(/\s+/g, '');
+      if (!phoneRegex.test(cleanNumber)) {
+        newErrors.contactNumber = 'Invalid Philippine mobile number format (e.g., +63 912 345 6789 or 0912 345 6789)';
+      }
     }
 
     if (!formData.whyHireYou.trim()) {
-      newErrors.whyHireYou = 'This field is required';
+      newErrors.whyHireYou = 'Please tell us why we should hire you';
     }
 
     setErrors(newErrors);
-    return !Object.values(newErrors).some(error => error !== '');
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const formatPhoneNumber = (number: string) => {
+    // Remove all non-digit characters
+    const cleaned = number.replace(/\D/g, '');
+    
+    // Format the number
+    if (cleaned.startsWith('63')) {
+      return `+${cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1 $2 $3 $4')}`;
+    } else if (cleaned.startsWith('0')) {
+      return cleaned.replace(/(\d{4})(\d{3})(\d{4})/, '$1 $2 $3');
+    }
+    return number;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const formattedNumber = formatPhoneNumber(text);
+    setFormData({ ...formData, contactNumber: formattedNumber });
+  };
+
+  const handleSubmit = () => {
     if (validateForm()) {
-      try {
-        await jobService.applyForJob(job.id, {
-          ...formData,
-          jobId: job.id,
-        });
-        alert('Application submitted successfully!');
-        if (fromSavedJobs) {
-          navigation.navigate('JobFinder');
-        } else {
-          navigation.goBack();
-        }
-      } catch (error) {
-        alert('Failed to submit application. Please try again.');
-      }
+      onSubmit(formData);
+      setFormData({
+        name: '',
+        email: '',
+        contactNumber: '',
+        whyHireYou: '',
+        jobId: jobId,
+      });
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Apply for {job.title}</Text>
-      <Text style={styles.subtitle}>{job.company}</Text>
-
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }
+      ]}
+    >
       <TextInput
-        label="Full Name"
+        label="Name"
         value={formData.name}
         onChangeText={(text) => setFormData({ ...formData, name: text })}
-        style={styles.input}
+        mode="outlined"
         error={!!errors.name}
+        style={styles.input}
       />
-      <HelperText type="error" visible={!!errors.name}>
-        {errors.name}
-      </HelperText>
+      {errors.name && (
+        <HelperText type="error" visible={!!errors.name}>
+          {errors.name}
+        </HelperText>
+      )}
 
       <TextInput
         label="Email"
         value={formData.email}
         onChangeText={(text) => setFormData({ ...formData, email: text })}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        style={styles.input}
+        mode="outlined"
         error={!!errors.email}
+        style={styles.input}
+        keyboardType="email-address"
       />
-      <HelperText type="error" visible={!!errors.email}>
-        {errors.email}
-      </HelperText>
+      {errors.email && (
+        <HelperText type="error" visible={!!errors.email}>
+          {errors.email}
+        </HelperText>
+      )}
 
       <TextInput
         label="Contact Number"
         value={formData.contactNumber}
-        onChangeText={(text) => setFormData({ ...formData, contactNumber: text })}
-        keyboardType="phone-pad"
-        style={styles.input}
+        onChangeText={handlePhoneChange}
+        mode="outlined"
         error={!!errors.contactNumber}
+        style={styles.input}
+        keyboardType="phone-pad"
+        placeholder="+63 XXX XXX XXXX or 09XX XXX XXXX"
       />
-      <HelperText type="error" visible={!!errors.contactNumber}>
-        {errors.contactNumber}
-      </HelperText>
+      {errors.contactNumber && (
+        <HelperText type="error" visible={!!errors.contactNumber}>
+          {errors.contactNumber}
+        </HelperText>
+      )}
 
       <TextInput
         label="Why should we hire you?"
         value={formData.whyHireYou}
         onChangeText={(text) => setFormData({ ...formData, whyHireYou: text })}
+        mode="outlined"
+        error={!!errors.whyHireYou}
+        style={styles.input}
         multiline
         numberOfLines={4}
-        style={styles.input}
-        error={!!errors.whyHireYou}
       />
-      <HelperText type="error" visible={!!errors.whyHireYou}>
-        {errors.whyHireYou}
-      </HelperText>
+      {errors.whyHireYou && (
+        <HelperText type="error" visible={!!errors.whyHireYou}>
+          {errors.whyHireYou}
+        </HelperText>
+      )}
 
-      <View style={styles.buttonContainer}>
-        <Button
-          mode="outlined"
-          onPress={() => navigation.goBack()}
-          style={styles.button}
-        >
-          Cancel
-        </Button>
-        <Button
-          mode="contained"
-          onPress={handleSubmit}
-          style={styles.button}
-        >
-          Submit Application
-        </Button>
-      </View>
+      <Button
+        mode="contained"
+        onPress={handleSubmit}
+        style={styles.button}
+      >
+        Submit Application
+      </Button>
     </ScrollView>
   );
 };
@@ -163,26 +171,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  input: {
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 24,
-  },
-  input: {
-    marginBottom: 4,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
   button: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
+    marginTop: 16,
+  }
 }); 
