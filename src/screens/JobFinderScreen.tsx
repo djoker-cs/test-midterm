@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Searchbar, ActivityIndicator, Text, IconButton, Modal, Portal } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -32,6 +32,12 @@ export const JobFinderScreen = () => {
     setShowModal(false);
     setSelectedJob(null);
   };
+
+  useEffect(() => {
+    console.log('Current jobs:', jobs);
+    console.log('Loading state:', loading);
+    console.log('Error state:', error);
+  }, [jobs, loading, error]);
 
   if (loading) {
     return <ActivityIndicator style={styles.centered} />;

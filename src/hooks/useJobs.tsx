@@ -32,30 +32,47 @@ export const useJobs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchJobs();
-    loadSavedJobs();
-  }, []);
-
   const fetchJobs = async () => {
     try {
+      console.log('Fetching jobs from API...'); // Debug log
       const response = await fetch('https://empllo.com/api/v1');
+      
+      // Log response status
+      console.log('API Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
+      console.log('API Response data:', data); // Debug log
+      
+      // Check if data is an array
+      if (!Array.isArray(data)) {
+        throw new Error('API response is not an array');
+      }
+
       const jobsWithIds = data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
         isSaved: false
       }));
+
       setJobs(jobsWithIds);
+      setError(null);
     } catch (err) {
-      setError('Failed to fetch jobs');
+      console.error('API Error:', err); // Debug log
+      setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
+      setJobs([]); // Clear jobs on error
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchJobs();
+    loadSavedJobs();
+  }, []);
 
   const loadSavedJobs = async () => {
     try {
