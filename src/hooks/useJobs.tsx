@@ -10,7 +10,7 @@ if (Platform.OS === 'android') {
   require('react-native-get-random-values');
 }
 
-const tryFetch = async (url: string) => {
+const tryFetch = async (url:'https://empllo.com/api/v1') => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -38,18 +38,34 @@ export const useJobs = () => {
   }, []);
 
   const fetchJobs = async () => {
-    const result = await tryFetch('https://empllo.com/api/v1');
-    
-    if (result.success && result.data) {
-      const jobsWithIds = result.data.map((job: Omit<Job, 'id'>) => ({
+    try {
+      console.log('Starting API fetch...');
+      const response = await fetch('https://empllo.com/api/v1', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data); // For debugging
+
+      const jobsWithIds = data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
         isSaved: false
       }));
+
       setJobs(jobsWithIds);
       setLoading(false);
-    } else {
-      setError(result.error || 'Failed to fetch jobs');
+    } catch (err) {
+      console.error('API Error:', err); // For debugging
+      setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
       setLoading(false);
     }
   };
