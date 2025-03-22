@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Job } from '../types/types';
-import { getMockJobs } from '../utils/mockApi';
 
 // Ensure crypto polyfill is available for Android
 if (Platform.OS === 'android') {
@@ -24,8 +24,8 @@ export const useJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const jobsData = await getMockJobs();
-      const jobsWithIds = jobsData.map((job) => ({
+      const response = await axios.get('https://empllo.com/api/v1');
+      const jobsWithIds = response.data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
         isSaved: false

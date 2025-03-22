@@ -11,12 +11,17 @@ export interface Job {
 export interface JobApplication {
   name: string;
   email: string;
-  contactNumber: string;
-  whyHireYou: string;
+  phone: string;
+  coverLetter: string;
   jobId: string;
 }
 
 export interface ThemeContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
-} 
+}
+
+export type ValidationError = {
+  field: string;
+  message: string;
+}; 

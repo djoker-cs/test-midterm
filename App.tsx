@@ -21,12 +21,10 @@ export default function App() {
               options={({ navigation }) => ({
                 title: 'Job Finder',
                 headerRight: () => (
-                  <PaperProvider>
-                    <IconButton
-                      icon="bookmark"
-                      onPress={() => navigation.navigate('SavedJobs')}
-                    />
-                  </PaperProvider>
+                  <IconButton
+                    icon="bookmark"
+                    onPress={() => navigation.navigate('SavedJobs')}
+                  />
                 ),
               })}
             />

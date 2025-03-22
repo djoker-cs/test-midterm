@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { useTheme } from '../context/ThemeContext';
 import { JobApplication } from '../types/types';
+import { ValidationError, validateApplication } from '../utils/validation';
 
 interface ApplicationFormProps {
   jobId: string;
@@ -17,50 +18,20 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
   const [formData, setFormData] = useState<JobApplication>({
     name: '',
     email: '',
-    contactNumber: '',
-    whyHireYou: '',
+    phone: '',
+    coverLetter: '',
     jobId: jobId,
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof JobApplication, string>>>({});
+  const [errors, setErrors] = useState<ValidationError>({});
 
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof JobApplication, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-
-    if (!formData.contactNumber.trim()) {
-      newErrors.contactNumber = 'Contact number is required';
-    } else {
-      // Philippine mobile number validation
-      // Format: +63 XXX XXX XXXX or 09XX XXX XXXX
-      const phoneRegex = /^(\+63|0)([9]\d{9})$/;
-      const cleanNumber = formData.contactNumber.replace(/\s+/g, '');
-      if (!phoneRegex.test(cleanNumber)) {
-        newErrors.contactNumber = 'Invalid Philippine mobile number format (e.g., +63 912 345 6789 or 0912 345 6789)';
-      }
-    }
-
-    if (!formData.whyHireYou.trim()) {
-      newErrors.whyHireYou = 'Please tell us why we should hire you';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validateForm = (): boolean => {
+    const validationErrors = validateApplication(formData);
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
   const formatPhoneNumber = (number: string) => {
-    // Remove all non-digit characters
     const cleaned = number.replace(/\D/g, '');
-    
-    // Format the number
     if (cleaned.startsWith('63')) {
       return `+${cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1 $2 $3 $4')}`;
     } else if (cleaned.startsWith('0')) {
@@ -71,7 +42,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
 
   const handlePhoneChange = (text: string) => {
     const formattedNumber = formatPhoneNumber(text);
-    setFormData({ ...formData, contactNumber: formattedNumber });
+    setFormData({ ...formData, phone: formattedNumber });
   };
 
   const handleSubmit = () => {
@@ -80,8 +51,8 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
       setFormData({
         name: '',
         email: '',
-        contactNumber: '',
-        whyHireYou: '',
+        phone: '',
+        coverLetter: '',
         jobId: jobId,
       });
     }
@@ -124,34 +95,34 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
       )}
 
       <TextInput
-        label="Contact Number"
-        value={formData.contactNumber}
+        label="Phone Number"
+        value={formData.phone}
         onChangeText={handlePhoneChange}
         mode="outlined"
-        error={!!errors.contactNumber}
+        error={!!errors.phone}
         style={styles.input}
         keyboardType="phone-pad"
         placeholder="+63 XXX XXX XXXX or 09XX XXX XXXX"
       />
-      {errors.contactNumber && (
-        <HelperText type="error" visible={!!errors.contactNumber}>
-          {errors.contactNumber}
+      {errors.phone && (
+        <HelperText type="error" visible={!!errors.phone}>
+          {errors.phone}
         </HelperText>
       )}
 
       <TextInput
-        label="Why should we hire you?"
-        value={formData.whyHireYou}
-        onChangeText={(text) => setFormData({ ...formData, whyHireYou: text })}
+        label="Cover Letter"
+        value={formData.coverLetter}
+        onChangeText={(text) => setFormData({ ...formData, coverLetter: text })}
         mode="outlined"
-        error={!!errors.whyHireYou}
+        error={!!errors.coverLetter}
         style={styles.input}
         multiline
         numberOfLines={4}
       />
-      {errors.whyHireYou && (
-        <HelperText type="error" visible={!!errors.whyHireYou}>
-          {errors.whyHireYou}
+      {errors.coverLetter && (
+        <HelperText type="error" visible={!!errors.coverLetter}>
+          {errors.coverLetter}
         </HelperText>
       )}
 

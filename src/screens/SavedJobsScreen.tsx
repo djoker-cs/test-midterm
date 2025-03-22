@@ -27,7 +27,6 @@ export const SavedJobsScreen: React.FC<Props> = ({ navigation }) => {
     console.log('Application submitted:', application);
     setShowApplicationForm(false);
     setSelectedJob(null);
-    // Show success message and navigate back
     alert('Application submitted successfully!');
     navigation.navigate('JobFinder');
   };
