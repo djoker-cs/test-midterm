@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Job } from '../types/types';
+import { api } from '../utils/api';
 
 // Ensure crypto polyfill is available for Android
 if (Platform.OS === 'android') {
@@ -24,7 +25,7 @@ export const useJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get('https://empllo.com/api/v1');
+      const response = await api.get('/');
       const jobsWithIds = response.data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
