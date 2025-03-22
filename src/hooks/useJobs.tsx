@@ -4,14 +4,25 @@ import { Platform } from 'react-native';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Job } from '../types/types';
-import { getMockJobs } from '../utils/mockApi';
+import { jobService } from '../services/api';
 
 // Ensure crypto polyfill is available for Android
 if (Platform.OS === 'android') {
   require('react-native-get-random-values');
 }
 
-export const useJobs = () => {
+interface UseJobsReturn {
+  jobs: Job[];
+  savedJobs: Job[];
+  loading: boolean;
+  error: string | null;
+  saveJob: (job: Job) => void;
+  removeJob: (jobId: string) => void;
+  searchJobs: (query: string) => Promise<void>;
+  refreshJobs: () => Promise<void>;
+}
+
+export const useJobs = (): UseJobsReturn => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +35,7 @@ export const useJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const jobsData = await getMockJobs();
+      const jobsData = await jobService.getJobs();
       const jobsWithIds = jobsData.map((job) => ({
         ...job,
         id: uuidv4(),
@@ -79,7 +90,7 @@ export const useJobs = () => {
     }
   };
 
-  const searchJobs = (query: string) => {
+  const searchJobs = async (query: string) => {
     if (!query.trim()) {
       fetchJobs();
       return;
@@ -93,6 +104,10 @@ export const useJobs = () => {
     setJobs(filteredJobs);
   };
 
+  const refreshJobs = async () => {
+    await fetchJobs();
+  };
+
   return {
     jobs,
     savedJobs,
@@ -100,6 +115,7 @@ export const useJobs = () => {
     error,
     saveJob,
     removeJob,
-    searchJobs
+    searchJobs,
+    refreshJobs
   };
 }; 

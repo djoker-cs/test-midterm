@@ -7,8 +7,8 @@ interface UseJobsReturn {
   savedJobs: Job[];
   loading: boolean;
   error: string | null;
-  saveJob: (job: Job) => Promise<void>;
-  removeJob: (jobId: string) => Promise<void>;
+  saveJob: (job: Job) => void;
+  removeJob: (jobId: string) => void;
   searchJobs: (query: string) => Promise<void>;
   refreshJobs: () => Promise<void>;
 }
@@ -49,22 +49,14 @@ export const useJobs = (): UseJobsReturn => {
     }
   };
 
-  const saveJob = async (job: Job) => {
-    try {
-      if (!savedJobs.some(savedJob => savedJob.id === job.id)) {
-        setSavedJobs(prev => [...prev, job]);
-      }
-    } catch (err) {
-      console.error('Error saving job:', err);
+  const saveJob = (job: Job) => {
+    if (!savedJobs.some(savedJob => savedJob.id === job.id)) {
+      setSavedJobs(prev => [...prev, job]);
     }
   };
 
-  const removeJob = async (jobId: string) => {
-    try {
-      setSavedJobs(prev => prev.filter(job => job.id !== jobId));
-    } catch (err) {
-      console.error('Error removing job:', err);
-    }
+  const removeJob = (jobId: string) => {
+    setSavedJobs(prev => prev.filter(job => job.id !== jobId));
   };
 
   return {

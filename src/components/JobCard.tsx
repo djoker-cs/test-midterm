@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, Title, Paragraph, Button, useTheme } from 'react-native-paper';
+import { Card, Title, Paragraph, Button } from 'react-native-paper';
 import { Job } from '../types/types';
 
 interface JobCardProps {
@@ -10,9 +10,12 @@ interface JobCardProps {
   isSaved: boolean;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, isSaved }) => {
-  const theme = useTheme();
-
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  onSave,
+  onApply,
+  isSaved
+}) => {
   return (
     <Card style={styles.card}>
       <Card.Content>
@@ -26,16 +29,15 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, isSaved 
       </Card.Content>
       <Card.Actions style={styles.actions}>
         <Button
-          mode={isSaved ? 'contained' : 'outlined'}
+          mode={isSaved ? "contained" : "outlined"}
           onPress={() => onSave(job)}
-          style={styles.button}
         >
-          {isSaved ? 'Saved' : 'Save Job'}
+          {isSaved ? "Saved" : "Save Job"}
         </Button>
         <Button
           mode="contained"
           onPress={() => onApply(job)}
-          style={styles.button}
+          style={styles.applyButton}
         >
           Apply
         </Button>
@@ -47,37 +49,32 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, isSaved 
 const styles = StyleSheet.create({
   card: {
     margin: 8,
-    elevation: 4,
+    elevation: 2,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   company: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
+    marginVertical: 4,
   },
   salary: {
-    fontSize: 14,
     color: '#2ecc71',
-    marginBottom: 4,
+    marginVertical: 2,
   },
   location: {
-    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginVertical: 2,
   },
   description: {
-    fontSize: 14,
-    color: '#666',
+    marginTop: 8,
   },
   actions: {
-    padding: 8,
     justifyContent: 'flex-end',
+    paddingTop: 8,
   },
-  button: {
+  applyButton: {
     marginLeft: 8,
   },
 }); 

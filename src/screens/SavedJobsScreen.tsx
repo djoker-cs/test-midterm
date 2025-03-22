@@ -4,7 +4,9 @@ import { Text, ActivityIndicator } from 'react-native-paper';
 import { JobCard } from '../components/JobCard';
 import { useJobs } from '../hooks/useJobs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/types';
+import { RootStackParamList } from '../types/navigation';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SavedJobs'>;
 
