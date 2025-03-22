@@ -1,16 +1,30 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Job } from '../types/types';
-import { api } from '../utils/api';
 
 // Ensure crypto polyfill is available for Android
 if (Platform.OS === 'android') {
   require('react-native-get-random-values');
 }
+
+const tryFetch = async (url: string) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to fetch data' 
+    };
+  }
+};
 
 export const useJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -24,17 +38,18 @@ export const useJobs = () => {
   }, []);
 
   const fetchJobs = async () => {
-    try {
-      const response = await api.get('/');
-      const jobsWithIds = response.data.map((job: Omit<Job, 'id'>) => ({
+    const result = await tryFetch('https://empllo.com/api/v1');
+    
+    if (result.success && result.data) {
+      const jobsWithIds = result.data.map((job: Omit<Job, 'id'>) => ({
         ...job,
         id: uuidv4(),
         isSaved: false
       }));
       setJobs(jobsWithIds);
       setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch jobs');
+    } else {
+      setError(result.error || 'Failed to fetch jobs');
       setLoading(false);
     }
   };
